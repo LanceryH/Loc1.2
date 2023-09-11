@@ -1,8 +1,13 @@
 import numpy as np
+from tqdm import tqdm
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-ax = plt.axes(projection='3d')
 
+def force(m1,X1,m2,X2) :
+    G=4*np.pi**2    
+    d=np.linalg.norm(X1-X2)
+    f=-(G*m1*m2/(d**3))*(X1-X2)
+    return f
+    
 class Object:
     def __init__(self, x, y, z, x_d, y_d, z_d, m):
         self.x = x
@@ -11,77 +16,81 @@ class Object:
         self.x_d = x_d
         self.y_d = y_d
         self.z_d = z_d
-        self.inf = [x,y,z,x_d,y_d,z_d]
+        self.info = [x, y, z, x_d, y_d, z_d]
         self.m = m
 
 class System:
     def __init__(self, Y, M):
-        self.Y = np.hstack((Y[0],Y[1],Y[2],Y[3]))
+        self.Y = np.hstack((Y[0], Y[1], Y[2], Y[3])).reshape((len(M)*6,1))
         self.M = np.array(M)
 
-def f(t, Y) :
-    mS=330000
-    mT=1
-    mM=0.1
-    mJ=317.83   #0.0123  masse lune
-    dST=np.linalg.norm(u[0:3]-u[6:9])
-    dSM=np.linalg.norm(u[0:3]-u[12:15])
-    dTM=np.linalg.norm(u[6:9]-u[12:15])
-    dSJ=np.linalg.norm(u[0:3]-u[18:21])
-    dTJ=np.linalg.norm(u[6:9]-u[18:21])
-    dMJ=np.linalg.norm(u[12:15]-u[18:21])
-
-    S1= -(4*np.pi**2)*(((mT/mS)/(dST**3))*(u[0]-u[6])+((mM/mS)/(dSM**3))*(u[0]-u[12])+((mJ/mS)/(dSJ**3))*(u[0]-u[18]))
-    S2=-(4*np.pi**2)*(((mT/mS)/(dST**3))*(u[1]-u[7])+((mM/mS)/(dSM**3))*(u[1]-u[13])+((mJ/mS)/(dSJ**3))*(u[1]-u[19]))
-    S3=-(4*np.pi**2)*(((mT/mS)/(dST**3))*(u[2]-u[8])+((mM/mS)/(dSM**3))*(u[2]-u[14])+((mJ/mS)/(dSJ**3))*(u[2]-u[20]))
+class Resolution:
+    def __init__(self, Y, t0, tf, N, nb_corps, M):
+        self.Y = Y
+        self.t0 = t0
+        self.tf = tf
+        self.N = N
+        self.nb_corps = nb_corps
+        self.M = M
+        self.h = (tf-t0)/N
     
-    S4= -(4*np.pi**2)*((1/(dST**3))*(u[6]-u[0])+((mM/mS)/(dTM**3))*(u[6]-u[12])+((mJ/mS)/(dTJ**3))*(u[6]-u[18]))
-    S5= -(4*np.pi**2)*((1/(dST**3))*(u[7]-u[1])+((mM/mS)/(dTM**3))*(u[7]-u[13])+((mJ/mS)/(dTJ**3))*(u[7]-u[19]))
-    S6= -(4*np.pi**2)*((1/(dST**3))*(u[8]-u[2])+((mM/mS)/(dTM**3))*(u[8]-u[14])+((mJ/mS)/(dTJ**3))*(u[8]-u[20]))
+    def f(self, t, Y, M):
+        nb_corps=len(M)
+        F=np.zeros((nb_corps*6,1))
+        for i in range(nb_corps) :
+            S=np.zeros((3,1))
+            for j in range(nb_corps) : 
+                if j != i:
+                    S+=force(M[i], Y[i*3:(i+1)*3,0].reshape(-1,1),M[j],Y[j*3:(j+1)*3,0].reshape(-1,1))
+                
+            F[i*3:(i+1)*3,0]=Y[nb_corps*3+i*3:(i+1)*3+nb_corps*3,0]  
+            F[nb_corps*3+i*3:(i+1)*3+nb_corps*3,0]=(1/M[i]*S).reshape(-1)    
+        return F   
+
     
-    S7= -(4*np.pi**2)*((1/(dSM**3))*(u[12]-u[0])+((mT/mS)/(dTM**3))*(u[12]-u[6])+((mJ/mS)/(dMJ**3))*(u[12]-u[18]))
-    S8= -(4*np.pi**2)*((1/(dSM**3))*(u[13]-u[1])+((mT/mS)/(dTM**3))*(u[13]-u[7])+((mJ/mS)/(dMJ**3))*(u[13]-u[19]))
-    S9= -(4*np.pi**2)*((1/(dSM**3))*(u[14]-u[2])+((mT/mS)/(dTM**3))*(u[14]-u[8])+((mJ/mS)/(dMJ**3))*(u[14]-u[20]))
+    def RK2(self):
+        t = self.t0
+        Y_return = np.zeros((3*self.nb_corps, self.N))
+        for i in tqdm(range(0, self.N)):
+            k1 = self.h * self.f(t, self.Y, self.M)
+            k2 = self.h * self.f(t + self.h, self.Y + k1, self.M)
+            self.Y = self.Y + (k1 + k2) / 2
+            t += self.h
+            for j in range(0, self.nb_corps):
+                Y_return[j*3:(j+1)*3, i] = self.Y[j*3:(j+1)*3, 0]
+        return Y_return
     
-    S10= -(4*np.pi**2)*((1/(dSJ**3))*(u[18]-u[0])+((mT/mS)/(dTJ**3))*(u[18]-u[6])+((mM/mS)/(dMJ**3))*(u[18]-u[12]))
-    S11= -(4*np.pi**2)*((1/(dSJ**3))*(u[19]-u[1])+((mT/mS)/(dTJ**3))*(u[19]-u[7])+((mM/mS)/(dMJ**3))*(u[19]-u[13]))
-    S12= -(4*np.pi**2)*((1/(dSJ**3))*(u[20]-u[2])+((mT/mS)/(dTJ**3))*(u[20]-u[8])+((mM/mS)/(dMJ**3))*(u[20]-u[14]))
-    
-    return np.array([u[3],u[4],u[5],S1,S2,S3,u[9],u[10],u[11],S4,S5,S6,u[15],u[16],u[17],S7,S8,S9,u[21],u[22],u[23],S10,S11,S12])
+    def RK4(self):
+        t = self.t0
+        Y_return = np.zeros((3*self.nb_corps, self.N))
+        for i in tqdm(range(0,self.N)) : 
+            k1=self.h*self.f(t,self.Y,self.M)
+            k2=self.h*self.f(t+self.h/2, self.Y+k1/2,self.M)
+            k3=self.h*self.f(t+self.h/2, self.Y+k2/2,self.M)
+            k4=self.h*self.f(t+self.h, self.Y+k3,self.M)
+            self.Y=self.Y+(1/6)*(k1 +2*k2 +2*k3 + k4)
+            t+=self.h    
+            for j in range(0,self.nb_corps) :
+                Y_return[j*3:(j+1)*3,i]=self.Y[j*3:(j+1)*3,0]
+        return Y_return  
 
-t0=0
-tf=20
-N=800
-h=(tf-t0)/float(N)
-t=t0
+body_1 = Object(255,181,0,273,227,0,1000)
+body_2 = Object(186, 213, 0, 220, 213, 0, 1000)
+body_3 = Object(-16, 23, 0, -20, -1, 0, 1000)
+body_4 = Object(3, 32, 0, 1, 18, 0, 1000)
 
-body_1 = Object(0,0,0,0,2,2,330000)
-body_2 = Object(1.0167103,0,0,0,6.128,0,1)
-body_3 = Object(1.66599116,0,0,0,4.5969,0,0.1)
-body_4 = Object(5.46,0,0,0,2.6025,0,317.83)
+system_solaire = System([body_1.info, body_2.info, body_3.info, body_4.info],
+                        [body_1.m, body_2.m, body_3.m, body_4.m])
 
-system_solaire = System([body_1.inf,body_2.inf,body_3.inf,body_4.inf],
-                        [body_1.m,body_2.m,body_3.m,body_4.m])
+Y_matrix = Resolution(Y=system_solaire.Y,
+                      t0=0,
+                      tf=2,
+                      N=5000,
+                      nb_corps=4,
+                      M=system_solaire.M).RK4()
 
-u0=system_solaire.Y
-u=u0
-
-for i in range(0,N) : 
-    t=t0+h
-    k1=h*f(t,u)
-    k2=h*f(t+h/2, u+k1/2)
-    k3=h*f(t+h/2, u+k2/2)
-    k4=h*f(t+h, u+k3)
-    u=u+(1/6)*(k1 +2*k2 +2*k3 + k4)
-    ax.set_xlim3d(-7,7)
-    ax.set_ylim3d(-7,7)
-    ax.set_zlim3d(-7,7)
-    ax.scatter3D(u[0], u[1], u[2],  c='y')
-    ax.scatter3D(u[6], u[7], u[8], c='b')
-    ax.scatter3D(u[12], u[13], u[14], c='r')
-    ax.scatter3D(u[18], u[19], u[20], c='g')
-    plt.pause(0.001)
-    plt.cla()
-    
-plt.show()   
-
+plt.plot(Y_matrix[9,:], Y_matrix[10,:],"b")
+plt.plot(Y_matrix[6,:], Y_matrix[7,:],"r")
+plt.plot(Y_matrix[3,:], Y_matrix[4,:],"y")
+plt.plot(Y_matrix[0,:], Y_matrix[1,:],"g")
+plt.show()
