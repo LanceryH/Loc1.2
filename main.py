@@ -50,7 +50,7 @@ class System:
             t += h
             for j in range(0, self.nb_corps):
                 Y_return[j*3:(j+1)*3, i] = self.Y[j*3:(j+1)*3, 0]
-        return Y_return
+        self.Y = Y_return
     
     def Resolution_RK4(self, t0, tf, N):
         t = t0
@@ -65,7 +65,7 @@ class System:
             t+=h    
             for j in range(0,self.nb_corps) :
                 Y_return[j*3:(j+1)*3,i]=self.Y[j*3:(j+1)*3,0]
-        return Y_return  
+        self.Y = Y_return  
 
 
 body_1 = Object(255,181,0,273,227,0,1000)
@@ -76,10 +76,10 @@ body_4 = Object(3, 32, 0, 1, 18, 0, 1000)
 system_solaire = System(Y=[body_1.info, body_2.info, body_3.info, body_4.info],
                         M=[body_1.m, body_2.m, body_3.m, body_4.m])
 
-Y_matrix = system_solaire.Resolution_RK4(t0=0,tf=2,N=5000)
+system_solaire.Resolution_RK4(t0=0,tf=2,N=5000)
 
-plt.plot(Y_matrix[9,:], Y_matrix[10,:],"b")
-plt.plot(Y_matrix[6,:], Y_matrix[7,:],"r")
-plt.plot(Y_matrix[3,:], Y_matrix[4,:],"y")
-plt.plot(Y_matrix[0,:], Y_matrix[1,:],"g")
+color = ["r","g","b","y"]
+
+for index in range(0,len(system_solaire.M)*3,3):
+    plt.plot(system_solaire.Y[index,:], system_solaire.Y[index+1,:],color[index//3])
 plt.show()
