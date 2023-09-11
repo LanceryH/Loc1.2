@@ -23,17 +23,8 @@ class System:
     def __init__(self, Y, M):
         self.Y = np.hstack((Y[0], Y[1], Y[2], Y[3])).reshape((len(M)*6,1))
         self.M = np.array(M)
+        self.nb_corps = len(self.M)
 
-class Resolution:
-    def __init__(self, Y, t0, tf, N, nb_corps, M):
-        self.Y = Y
-        self.t0 = t0
-        self.tf = tf
-        self.N = N
-        self.nb_corps = nb_corps
-        self.M = M
-        self.h = (tf-t0)/N
-    
     def f(self, t, Y, M):
         nb_corps=len(M)
         F=np.zeros((nb_corps*6,1))
@@ -48,46 +39,44 @@ class Resolution:
         return F   
 
     
-    def RK2(self):
-        t = self.t0
-        Y_return = np.zeros((3*self.nb_corps, self.N))
-        for i in tqdm(range(0, self.N)):
-            k1 = self.h * self.f(t, self.Y, self.M)
-            k2 = self.h * self.f(t + self.h, self.Y + k1, self.M)
+    def Resolution_RK2(self, t0, tf, N):
+        t = t0
+        h = (tf-t0)/N
+        Y_return = np.zeros((3*self.nb_corps, N))
+        for i in tqdm(range(0, N)):
+            k1 = h * self.f(t, self.Y, self.M)
+            k2 = h * self.f(t + h, self.Y + k1, self.M)
             self.Y = self.Y + (k1 + k2) / 2
-            t += self.h
+            t += h
             for j in range(0, self.nb_corps):
                 Y_return[j*3:(j+1)*3, i] = self.Y[j*3:(j+1)*3, 0]
         return Y_return
     
-    def RK4(self):
-        t = self.t0
-        Y_return = np.zeros((3*self.nb_corps, self.N))
-        for i in tqdm(range(0,self.N)) : 
-            k1=self.h*self.f(t,self.Y,self.M)
-            k2=self.h*self.f(t+self.h/2, self.Y+k1/2,self.M)
-            k3=self.h*self.f(t+self.h/2, self.Y+k2/2,self.M)
-            k4=self.h*self.f(t+self.h, self.Y+k3,self.M)
+    def Resolution_RK4(self, t0, tf, N):
+        t = t0
+        h = (tf-t0)/N
+        Y_return = np.zeros((3*self.nb_corps, N))
+        for i in tqdm(range(0,N)) : 
+            k1=h*self.f(t,self.Y,self.M)
+            k2=h*self.f(t+h/2, self.Y+k1/2,self.M)
+            k3=h*self.f(t+h/2, self.Y+k2/2,self.M)
+            k4=h*self.f(t+h, self.Y+k3,self.M)
             self.Y=self.Y+(1/6)*(k1 +2*k2 +2*k3 + k4)
-            t+=self.h    
+            t+=h    
             for j in range(0,self.nb_corps) :
                 Y_return[j*3:(j+1)*3,i]=self.Y[j*3:(j+1)*3,0]
         return Y_return  
+
 
 body_1 = Object(255,181,0,273,227,0,1000)
 body_2 = Object(186, 213, 0, 220, 213, 0, 1000)
 body_3 = Object(-16, 23, 0, -20, -1, 0, 1000)
 body_4 = Object(3, 32, 0, 1, 18, 0, 1000)
 
-system_solaire = System([body_1.info, body_2.info, body_3.info, body_4.info],
-                        [body_1.m, body_2.m, body_3.m, body_4.m])
+system_solaire = System(Y=[body_1.info, body_2.info, body_3.info, body_4.info],
+                        M=[body_1.m, body_2.m, body_3.m, body_4.m])
 
-Y_matrix = Resolution(Y=system_solaire.Y,
-                      t0=0,
-                      tf=2,
-                      N=5000,
-                      nb_corps=4,
-                      M=system_solaire.M).RK4()
+Y_matrix = system_solaire.Resolution_RK4(t0=0,tf=2,N=5000)
 
 plt.plot(Y_matrix[9,:], Y_matrix[10,:],"b")
 plt.plot(Y_matrix[6,:], Y_matrix[7,:],"r")
