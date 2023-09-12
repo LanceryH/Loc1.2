@@ -9,15 +9,10 @@ def force(m1,X1,m2,X2) :
     return f
     
 class Object:
-    def __init__(self, x, y, z, x_d, y_d, z_d, m):
-        self.x = x
-        self.y = y
-        self.z = z
-        self.x_d = x_d
-        self.y_d = y_d
-        self.z_d = z_d
-        self.info = [x, y, z, x_d, y_d, z_d]
-        self.m = m
+    def __init__(self):
+        self.position = []
+        self.vitesse = []
+        self.mass = 1
 
 class System:
     def __init__(self, Y, M):
@@ -28,15 +23,15 @@ class System:
     def f(self, t, Y, M):
         nb_corps=len(M)
         F=np.zeros((nb_corps*6,1))
-        for i in range(nb_corps) :
+        for i in range(nb_corps):
             S=np.zeros((3,1))
-            for j in range(nb_corps) : 
+            for j in range(nb_corps):
                 if j != i:
                     S+=force(M[i], Y[i*3:(i+1)*3,0].reshape(-1,1),M[j],Y[j*3:(j+1)*3,0].reshape(-1,1))
-                
-            F[i*3:(i+1)*3,0]=Y[nb_corps*3+i*3:(i+1)*3+nb_corps*3,0]  
-            F[nb_corps*3+i*3:(i+1)*3+nb_corps*3,0]=(1/M[i]*S).reshape(-1)    
-        return F   
+
+            F[i*3:(i+1)*3,0]=Y[nb_corps*3+i*3:(i+1)*3+nb_corps*3,0]
+            F[nb_corps*3+i*3:(i+1)*3+nb_corps*3,0]=(1/M[i]*S).reshape(-1)
+        return F
 
     
     def Resolution_RK2(self, t0, tf, N):
@@ -67,14 +62,33 @@ class System:
                 Y_return[j*3:(j+1)*3,i]=self.Y[j*3:(j+1)*3,0]
         self.Y = Y_return  
 
+body_1 = Object()
+body_1.position = [255, 181, 0]
+body_1.vitesse = [273, 227, 0]
+body_1.mass = 1000
 
-body_1 = Object(255,181,0,273,227,0,1000)
-body_2 = Object(186, 213, 0, 220, 213, 0, 1000)
-body_3 = Object(-16, 23, 0, -20, -1, 0, 1000)
-body_4 = Object(3, 32, 0, 1, 18, 0, 1000)
+body_2 = Object()
+body_2.position = [186, 213, 0]
+body_2.vitesse = [220, 213, 0]
+body_2.mass = 1000
 
-system_solaire = System(Y=[body_1.info, body_2.info, body_3.info, body_4.info],
-                        M=[body_1.m, body_2.m, body_3.m, body_4.m])
+body_3 = Object()
+body_3.position = [-16, 23, 0]
+body_3.vitesse = [-20, -1, 0]
+body_3.mass = 1000
+
+body_4 = Object()
+body_4.position = [3, 32, 0]
+body_4.vitesse = [1, 18, 0]
+body_4.mass = 1000
+
+print(np.hstack((body_1.position,body_1.vitesse)))
+
+system_solaire = System(Y=[np.hstack((body_1.position,body_1.vitesse)),
+                           np.hstack((body_2.position,body_2.vitesse)),
+                           np.hstack((body_3.position,body_3.vitesse)),
+                           np.hstack((body_4.position,body_4.vitesse))],
+                        M=[body_1.mass, body_2.mass, body_3.mass, body_4.mass])
 
 system_solaire.Resolution_RK4(t0=0,tf=2,N=5000)
 
