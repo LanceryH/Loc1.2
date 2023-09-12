@@ -29,7 +29,7 @@ class System:
             list_int.append(self.bodys[index].stack_pos_vit())
         return np.hstack((list_int)).reshape((self.nb_corps*6,1))
     
-    def system_masses(self):
+    def system_mass(self):
         list_int = []
         for index in range(self.nb_corps):
             list_int.append(self.bodys[index].mass)
