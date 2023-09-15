@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from dataclasses import dataclass
 from flask import Flask, request, jsonify, render_template
+from flask_table import Table, Col
 import json
 import requests
 
@@ -111,7 +112,7 @@ class System:
             Y = Y_RK5
             for j in range(0,self.nb_corps) :
                 Y_return[j*3:(j+1)*3,i]=Y[j*3:(j+1)*3,0]
-        return Y_return, pas_var
+        return Y_return
     
     def Resolution_RK45_2(self, t0, tf, dt0):
         t = t0
@@ -140,7 +141,15 @@ class System:
             for j in range(0,self.nb_corps) :
                 Y_return.append(Y[:,0])
         return np.array(Y_return), pas_var
-    
+
+class Results(Table):
+    id = Col('Id', show=False)
+    artist = Col('Artist')
+    title = Col('Title')
+    release_date = Col('Release Date')
+    publisher = Col('Publisher')
+    media_type = Col('Media')
+
 body_1 = Object(position=[255, 181, 0],
                 vitesse=[273, 227, 0],
                 mass=1000)
@@ -157,18 +166,26 @@ body_4 = Object(position=[3, 32, 0],
 system_solaire = System(bodys=[body_1,body_2,body_3,body_4],
                         nb_corps=4)
 
+method = ["RK_2","RK_4","RK45"]
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', data=0)
 
 @app.route('/submit', methods=['POST'])
 def calculate():
     if request.method == 'POST':
-        value = request.form["value"]
-        if value == "oui":
-            return render_template("done.html")
+        value = request.form["bodys"]
+        print(value)
+        if value == "RK_2":
+            Y = system_solaire.Resolution_RK2(t0=0,tf=2,N=1000)
+        elif value == "RK_4":
+            Y = system_solaire.Resolution_RK4(t0=0,tf=2,N=1000)
+        elif value == "RK_45":
+            Y,PAS_VAR = system_solaire.Resolution_RK45_2(t0=0,tf=2,dt0=1e-3)
+            return render_template("index.html", data=PAS_VAR)
         else:
-            return render_template("index.html")
+            return render_template("index.html", data=0)
 
 if __name__ == '__main__':
     app.debug = True
