@@ -7,7 +7,7 @@ from flask_table import Table, Col
 import json
 import requests
 
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, template_folder='templates', static_folder='static')
 
 def force(m1,X1,m2,X2) :
     G=4*np.pi**2    
