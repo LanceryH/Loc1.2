@@ -3,7 +3,8 @@ from tqdm import tqdm
 from dataclasses import dataclass
 from flask import Flask, request, jsonify, render_template
 from flask_table import Table, Col
-from bokeh.plotting import figure, show
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
@@ -114,7 +115,7 @@ class System:
     
     def Resolution_RK45_2(self, t0, tf, dt0):
         t = t0
-        pas_var = []
+        time = []
         error_min = 1e-3
         h = dt0
         Y = self.system_pos_vit()
@@ -133,12 +134,13 @@ class System:
             t += h
             error = np.linalg.norm(np.abs(Y_RK4-Y_RK5))
             q = (error_min/error)**(1/5)
-            pas_var.append(h)
+            time.append(t)
             h = q*h
             Y = Y_RK5
             for j in range(0,self.nb_corps) :
+                del j
                 Y_return.append(Y[:,0])
-        return np.array(Y_return), pas_var
+        return np.array(Y_return), time
 
 class Results(Table):
     id = Col('Id', show=False)
@@ -164,31 +166,36 @@ body_4 = Object(position=[3, 32, 0],
 system_solaire = System(bodys=[body_1,body_2,body_3,body_4],
                         nb_corps=4)
 
-method = ["RK_2","RK_4","RK45"]
-
-@app.route('/')
-def index():
-    return render_template('index.html', data=0)
-
-@app.route('/submit', methods=['POST'])
-def calculate():
-    if request.method == 'POST':
-        value = request.form["bodys"]
-        print(value)
-        if value == "RK_2":
-            Y = system_solaire.Resolution_RK2(t0=0,tf=2,N=1000)
-        elif value == "RK_4":
-            Y = system_solaire.Resolution_RK4(t0=0,tf=2,N=1000)
-        elif value == "RK_45":
-            Y,PAS_VAR = system_solaire.Resolution_RK45_2(t0=0,tf=2,dt0=1e-3)
-            return render_template("index.html", data=PAS_VAR)
-        else:
-            return render_template("index.html", data=0)
-
-if __name__ == '__main__':
-    app.debug = True
-    app.run(debug=True)
-
-#Y_RK45, PAS_VAR = system_solaire.Resolution_RK45_2(t0=0,tf=2,dt0=1e-3)
+Y_RK45, TIME = system_solaire.Resolution_RK45_2(t0=0,tf=2,dt0=1e-3)
 #Y_RK4 = system_solaire.Resolution_RK4(t0=0,tf=2,N=1000)
 #Y_RK2 = system_solaire.Resolution_RK2(t0=0,tf=2,N=1000)
+
+def update(frame):
+    ax.clear()
+    ax.set_xlim(-300, 300)  # Adjust the limits based on your system's dimensions
+    ax.set_ylim(-300, 300)  # Adjust the limits based on your system's dimensions
+    ax.set_aspect('equal')  # Ensure equal aspect ratio for the plot
+
+    # Update the positions of celestial bodies at the given frame
+    for i, body in enumerate(system_solaire.bodys):
+        ax.scatter(Y_RK45[frame, i * 3], Y_RK45[frame, i * 3 + 1], label=f'Body {i + 1}', s=100)
+    
+    ax.set_xlabel('X Position')
+    ax.set_ylabel('Y Position')
+    ax.set_title(f'Time Step: {frame}')
+
+# Create a Matplotlib figure and axis
+fig, ax = plt.subplots(figsize=(8, 8))
+
+# Create the animation
+ani = FuncAnimation(fig, update, frames=len(Y_RK45), interval=100)  # Adjust interval as needed
+
+# To display the animation in a Jupyter Notebook, you can use the following line:
+# from IPython.display import HTML
+# HTML(ani.to_jshtml())
+
+# To save the animation as a video file (e.g., .mp4), you can use the following line:
+# ani.save('celestial_bodies_animation.mp4', writer='ffmpeg')
+
+# To display the animation using a standalone Matplotlib window:
+plt.show()
