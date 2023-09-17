@@ -1,11 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 from dataclasses import dataclass
 from flask import Flask, request, jsonify, render_template
 from flask_table import Table, Col
-import json
-import requests
+from bokeh.plotting import figure, show
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
