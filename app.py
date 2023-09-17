@@ -142,60 +142,32 @@ class System:
                 Y_return.append(Y[:,0])
         return np.array(Y_return), time
 
-class Results(Table):
-    id = Col('Id', show=False)
-    artist = Col('Artist')
-    title = Col('Title')
-    release_date = Col('Release Date')
-    publisher = Col('Publisher')
-    media_type = Col('Media')
-
-body_1 = Object(position=[255, 181, 0],
-                vitesse=[273, 227, 0],
+body_1 = Object(position=[10, 10, 0],
+                vitesse=[-10, 10, 0],
                 mass=1000)
-body_2 = Object(position=[186, 213, 0],
-                vitesse=[220, 213, 0],
+body_2 = Object(position=[0, 10, 0],
+                vitesse=[0, 10, 0],
                 mass=1000)
-body_3 = Object(position=[-16, 23, 0],
-                vitesse=[-20, -1, 0],
+body_3 = Object(position=[-10, -10, 0],
+                vitesse=[-10, 10, 0],
                 mass=1000)
-body_4 = Object(position=[3, 32, 0],
-                vitesse=[1, 18, 0],
+body_4 = Object(position=[0, -10, 0],
+                vitesse=[0, 10, 0],
                 mass=1000)
+system_solaire = System(bodys=[body_1,body_2,body_3],
+                        nb_corps=3)
 
-system_solaire = System(bodys=[body_1,body_2,body_3,body_4],
-                        nb_corps=4)
+Y_RK45, PAS_VAR = system_solaire.Resolution_RK45_2(t0=0,tf=2,dt0=1e-5)
+Y_RK4 = system_solaire.Resolution_RK4(t0=0,tf=2,N=1000)
+Y_RK2 = system_solaire.Resolution_RK2(t0=0,tf=2,N=1000)
 
-Y_RK45, TIME = system_solaire.Resolution_RK45_2(t0=0,tf=2,dt0=1e-3)
-#Y_RK4 = system_solaire.Resolution_RK4(t0=0,tf=2,N=1000)
-#Y_RK2 = system_solaire.Resolution_RK2(t0=0,tf=2,N=1000)
+color = ["r","g","b","y"]
+print(np.shape(Y_RK45))
 
-def update(frame):
-    ax.clear()
-    ax.set_xlim(-300, 300)  # Adjust the limits based on your system's dimensions
-    ax.set_ylim(-300, 300)  # Adjust the limits based on your system's dimensions
-    ax.set_aspect('equal')  # Ensure equal aspect ratio for the plot
+plt.figure(1)
+for index in range(0,system_solaire.nb_corps*3,3):
+    plt.plot(Y_RK45[:,index], Y_RK45[:,index+1], color[index//3])
 
-    # Update the positions of celestial bodies at the given frame
-    for i, body in enumerate(system_solaire.bodys):
-        ax.scatter(Y_RK45[frame, i * 3], Y_RK45[frame, i * 3 + 1], label=f'Body {i + 1}', s=100)
-    
-    ax.set_xlabel('X Position')
-    ax.set_ylabel('Y Position')
-    ax.set_title(f'Time Step: {frame}')
-
-# Create a Matplotlib figure and axis
-fig, ax = plt.subplots(figsize=(8, 8))
-
-# Create the animation
-ani = FuncAnimation(fig, update, frames=len(Y_RK45), interval=100)  # Adjust interval as needed
-
-# To display the animation in a Jupyter Notebook, you can use the following line:
-# from IPython.display import HTML
-# HTML(ani.to_jshtml())
-
-# To save the animation as a video file (e.g., .mp4), you can use the following line:
-# ani.save('celestial_bodies_animation.mp4', writer='ffmpeg')
-
-# To display the animation using a standalone Matplotlib window:
+plt.figure(2)
+plt.plot(np.linspace(0,len(PAS_VAR),len(PAS_VAR)), PAS_VAR, "black")
 plt.show()
