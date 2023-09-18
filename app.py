@@ -4,7 +4,7 @@ from view import View
 
 body_1 = Object(position=[10, 10, 10],
                 vitesse=[10, 0, 0],
-                mass=1000)
+                mass=100)
 body_2 = Object(position=[0, 10, 0],
                 vitesse=[10, 0, 0],
                 mass=100)
