@@ -11,9 +11,7 @@ body_2 = Object(position=[0, 10, 0],
 body_3 = Object(position=[0, 0, 0],
                 vitesse=[-10, 10, 0],
                 mass=100)
-body_4 = Object(position=[10, 0, 0],
-                vitesse=[0, 0, 0],
-                mass=100)
+
 system_solaire = System(bodys=[body_1,body_2,body_3])
 
 Y_RK45, TIME = system_solaire.Resolution_RK45_2(t0=0,tf=2,dt0=1e-5)
