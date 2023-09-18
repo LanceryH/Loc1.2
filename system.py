@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from object import Object
 import numpy as np
 from tqdm import tqdm
 
@@ -11,7 +10,7 @@ def force(m1,X1,m2,X2) :
 
 @dataclass
 class System:
-    bodys: list[Object]
+    bodys: list[type]
 
     def system_pos_vit(self):
         nb_corps = len(self.bodys)
