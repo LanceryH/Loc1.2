@@ -1,9 +1,7 @@
 import numpy as np
-from tqdm import tqdm
 from object import Object
 from system import System
 from view import View
-from dataclasses import dataclass
 
 body_1 = Object(position=[10, 10, 10],
                 vitesse=[10, 0, 0],
