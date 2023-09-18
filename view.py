@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from flask import Flask, request, jsonify, render_template
-from flask_table import Table, Col
+from flask import Flask
 import plotly.graph_objs as go
 
 @dataclass
@@ -23,13 +22,10 @@ class View:
             fig.add_trace(trace)
 
         fig.update_layout(
-            scene=dict(
-                xaxis_title='X',
-                yaxis_title='Y',
-                zaxis_title='Z',
-                aspectmode='cube'
-            ),
-            title='Object Trajectories'
-        )
+            scene=dict(xaxis_title='X',
+                       yaxis_title='Y',
+                       zaxis_title='Z',
+                       aspectmode='cube'),
+                       title='Object Trajectories')
 
         fig.show()
