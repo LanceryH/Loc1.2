@@ -1,4 +1,3 @@
-import numpy as np
 from object import Object
 from system import System
 from view import View
