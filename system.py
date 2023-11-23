@@ -113,7 +113,7 @@ class System:
         M = self.system_mass()
         Y_return = []
         while t < tf : 
-            #print(t)
+            print(t)
             k1 = h *self.f(t,Y,M)
             k2 = h *self.f(t+h/4, Y+k1/4,M)
             k3 = h *self.f(t+h*3/8, Y+k1*3/32+k2*9/32,M)
